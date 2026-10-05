@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Project Starter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one focused column per step (hero → input → result → referral), tracker as a separate tab */
+:root{
+  --bg:#070E22; --surface:#0E1A3A; --surface-2:#14244D; --line:rgba(147,170,230,.16);
+  --text:#EAF0FF; --muted:#97A6CB; --blue:#3D7BFF; --blue-2:#6FA0FF; --amber:#FFB648; --green:#25D366; --danger:#FF6B6B;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--text)}
+body{font-family:var(--body);font-size:16px;line-height:1.55;margin:0;min-height:100vh;
+  background:radial-gradient(1200px 600px at 85% -10%, rgba(61,123,255,.22), transparent 60%), var(--bg)}
+a{color:var(--blue-2)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:clamp(16px,4vw,40px)}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-.01em}
+.brand .mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--blue),#1E4FD8);display:grid;place-items:center;font-family:var(--mono);font-size:13px;color:#fff}
+nav.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+nav.tabs button{background:none;border:0;color:var(--muted);padding:7px 14px;border-radius:999px;font-weight:600;font-size:14px}
+nav.tabs button[aria-current="true"]{background:var(--surface-2);color:var(--text)}
+.screen{display:none;padding-block:28px 64px;transition:opacity .35s ease, transform .35s ease}
+.screen.active{display:block}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.025em;text-wrap:balance;margin:0}
+h1{font-size:clamp(40px,6.4vw,76px);line-height:1.02;font-weight:800}
+h2{font-size:clamp(28px,3.6vw,42px);line-height:1.08;font-weight:700}
+h3{font-size:22px;font-weight:700}
+.lead{font-size:clamp(17px,1.6vw,21px);color:var(--muted);max-width:40ch}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:14px;padding:16px 26px;font-weight:700;font-size:17px;text-decoration:none;transition:transform .15s ease, filter .15s ease}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 10px 30px -10px rgba(61,123,255,.8)}
+.btn-amber{background:var(--amber);color:#1B1300;box-shadow:0 10px 30px -10px rgba(255,182,72,.7)}
+.btn-wa{background:var(--green);color:#062A14;box-shadow:0 10px 30px -10px rgba(37,211,102,.6)}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.invite{display:none;align-items:center;gap:10px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.35);color:#BFF5D3;border-radius:12px;padding:10px 14px;font-weight:600;margin-bottom:22px;width:fit-content;max-width:100%}
+.invite.show{display:flex}
+
+/* HERO */
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;padding-top:20px}
+.hero-copy{display:grid;gap:22px;min-width:0}
+.meta{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:1px solid var(--line);background:rgba(20,36,77,.6);border-radius:999px;padding:6px 12px;font-size:14px;color:var(--muted);font-weight:500}
+.chip b{color:var(--text);font-weight:600}
+.preview{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:24px;display:grid;gap:14px;box-shadow:0 40px 80px -40px rgba(0,0,0,.7);transform:rotate(1.2deg)}
+.preview .row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.mini{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.preview h3{font-size:24px}
+.preview p{margin:0;color:var(--muted)}
+.steps-mini{display:grid;gap:8px}
+.steps-mini div{display:flex;gap:10px;font-size:14px;color:var(--muted)}
+.steps-mini span{font-family:var(--mono);color:var(--blue-2);min-width:56px}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
+.how div{border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:15px}
+.how b{display:block;color:var(--text);font-family:var(--display);font-size:18px;margin-bottom:4px}
+
+/* FORM */
+.form-card{max-width:760px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:clamp(22px,4vw,40px);display:grid;gap:26px}
+.field{display:grid;gap:10px}
+.field label,.field .lbl{font-weight:600;font-size:15px}
+.field .hint{color:var(--muted);font-weight:500;font-size:13.5px;margin-left:6px}
+input[type=text]{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:14px 16px;font:inherit;font-size:17px}
+input[type=text]::placeholder{color:#5D6C92}
+input[type=text]:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px rgba(61,123,255,.2)}
+.opts{display:grid;gap:10px;grid-template-columns:repeat(4,1fr)}
+.opt{background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:12px 12px;font-weight:600;font-size:15px;text-align:left;transition:border-color .15s, background .15s}
+.opt small{display:block;color:var(--muted);font-weight:500;font-size:12.5px;margin-top:2px}
+.opt[aria-pressed="true"]{border-color:var(--blue);background:rgba(61,123,255,.14)}
+.opt .ic{font-family:var(--mono);color:var(--blue-2);font-size:13px;display:block;margin-bottom:6px}
+.err{color:var(--danger);font-size:14px;min-height:20px}
+
+/* LOADING */
+.loading{display:grid;place-items:center;gap:18px;min-height:340px;text-align:center}
+.spinner{width:56px;height:56px;border-radius:50%;border:4px solid var(--surface-2);border-top-color:var(--blue);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RESULT */
+.result{display:grid;grid-template-columns:1.25fr .75fr;gap:24px;align-items:start}
+.project{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:clamp(22px,3.4vw,36px);display:grid;gap:18px;min-width:0}
+.project h2{font-size:clamp(30px,3.8vw,46px)}
+.project .pitch{font-size:19px;color:#C9D4F2;margin:0}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 9px;color:var(--blue-2)}
+.why{background:rgba(255,182,72,.08);border:1px solid rgba(255,182,72,.25);border-radius:14px;padding:14px 16px;color:#FFE2B5;font-size:15px}
+.plan{display:grid;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.plan div{display:grid;grid-template-columns:86px 1fr;gap:12px;padding:12px 16px;border-top:1px solid var(--line);font-size:15px}
+.plan div:first-child{border-top:0}
+.plan span{font-family:var(--mono);color:var(--blue-2);font-size:13px;padding-top:2px}
+.resume{font-size:14.5px;color:var(--muted)}
+.resume b{color:var(--text)}
+.cta-card{position:sticky;top:20px;background:linear-gradient(160deg,#1A3A8F,#0E1A3A 70%);border:1px solid rgba(111,160,255,.35);border-radius:24px;padding:28px;display:grid;gap:16px}
+.cta-card h3{font-size:28px;line-height:1.1}
+.cta-card p{margin:0;color:#C9D4F2}
+.cta-card ul{margin:0;padding-left:18px;color:#C9D4F2;font-size:15px;display:grid;gap:4px}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:14px;padding:4px;justify-self:start}
+
+/* REFERRAL */
+.ref{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.ok{display:inline-flex;align-items:center;gap:8px;color:#BFF5D3;font-weight:700;font-size:15px}
+.ok i{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;color:#062A14;font-style:normal;font-size:13px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:clamp(22px,3.4vw,32px);display:grid;gap:18px;min-width:0}
+.code{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg);border:1px dashed rgba(111,160,255,.5);border-radius:16px;padding:16px 18px}
+.code strong{font-family:var(--mono);font-size:clamp(24px,3vw,32px);letter-spacing:.06em;color:#fff}
+.copy{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 12px;font-weight:600;font-size:14px}
+.reflink{font-family:var(--mono);font-size:13px;color:var(--muted);word-break:break-all}
+.friends{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.friend{border:1px dashed var(--line);border-radius:14px;padding:14px;text-align:center;color:var(--muted);font-size:14px}
+.friend b{display:block;font-family:var(--display);font-size:26px;color:var(--text)}
+.loop{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.loop span{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--text);font-weight:600}
+.loop em{font-style:normal;color:var(--blue-2)}
+.bar{height:10px;background:var(--bg);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--blue-2));border-radius:999px}
+.small{font-size:13.5px;color:var(--muted)}
+
+/* TRACKER */
+.tracker-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:16px;margin-bottom:22px}
+.notice{background:rgba(255,182,72,.08);border:1px solid rgba(255,182,72,.3);color:#FFE2B5;border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:20px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px}
+.kpi .v{font-family:var(--display);font-size:36px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .l{color:var(--muted);font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.engine{display:grid;gap:8px;padding:14px 0;border-top:1px solid var(--line)}
+.engine:first-of-type{border-top:0}
+.engine .row{display:flex;justify-content:space-between;gap:10px;font-size:15px}
+.engine .row b{font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:14.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;padding:8px 6px;border-bottom:1px solid var(--line)}
+td{padding:9px 6px;border-bottom:1px solid var(--line)}
+.tablewrap{overflow-x:auto}
+.schema{font-family:var(--mono);font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px}
+.schema span{border:1px solid var(--line);border-radius:6px;padding:3px 7px}
+footer{color:#5D6C92;font-size:13px;padding-block:24px 40px;border-top:1px solid var(--line)}
+
+@media (max-width:900px){
+  .hero,.result,.ref,.grid2{grid-template-columns:1fr}
+  .preview{transform:none}
+  .opts{grid-template-columns:repeat(2,1fr)}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .how{grid-template-columns:1fr}
+  .cta-card{position:static}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:.01s!important}}
+html.demo-static *{transition:none!important}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="mark">AI</span> Project Starter</div>
+    <nav class="tabs" aria-label="Views">
+      <button id="tab-student" aria-current="true" type="button">Student view</button>
+      <button id="tab-tracker" aria-current="false" type="button">Campaign tracker</button>
+    </nav>
+  </header>
+
+  <!-- SCREEN 1: HERO -->
+  <section class="screen active" id="s-hero">
+    <div class="invite" id="invite"></div>
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">Free live workshop · For final-year engineers</div>
+        <h1>Build Your First AI Project</h1>
+        <p class="lead">Not sure what AI project to build? Get a personalised project starter in 1 minute. Then build your first version with us in 60.</p>
+        <div><button class="btn btn-primary" id="go-generate" type="button">Generate My Project →</button></div>
+        <div class="meta">
+          <span class="chip"><b>1 min</b> to your idea</span>
+          <span class="chip"><b>60 min</b> live build</span>
+          <span class="chip"><b>₹0</b> free</span>
+        </div>
+      </div>
+      <aside class="preview" aria-label="Example project starter">
+        <div class="row"><span class="mini">Example starter</span><span class="tag">Generative AI</span></div>
+        <h3>Placement Prep Copilot</h3>
+        <p>Paste a job description and get a personalised 7-day interview prep plan.</p>
+        <div class="steps-mini">
+          <div><span>00–10</span>Set up the API and a starter notebook</div>
+          <div><span>10–30</span>Parse the JD into skills and topics</div>
+          <div><span>30–50</span>Generate the day-wise plan</div>
+          <div><span>50–60</span>Demo it and add it to your resume</div>
+        </div>
+      </aside>
+    </div>
+    <div class="how">
+      <div><b>1. Tell us about you</b>Branch, college and the AI area you're curious about.</div>
+      <div><b>2. Get your project</b>A specific idea with a stack and a 60-minute build plan.</div>
+      <div><b>3. Build it live</b>Register free and ship your first version in the workshop.</div>
+    </div>
+  </section>
+
+  <!-- SCREEN 2: INPUT -->
+  <section class="screen" id="s-input">
+    <form class="form-card" id="form" novalidate>
+      <div>
+        <div class="eyebrow">Step 1 of 2</div>
+        <h2 style="margin-top:8px">Tell us about you</h2>
+      </div>
+      <div class="field">
+        <label for="f-name">Your name</label>
+        <input type="text" id="f-name" autocomplete="given-name" placeholder="e.g. Arjun">
+      </div>
+      <div class="field">
+        <span class="lbl">Branch</span>
+        <div class="opts" id="f-branch" role="group" aria-label="Branch">
+          <button type="button" class="opt" data-v="cse">CSE / IT</button>
+          <button type="button" class="opt" data-v="ece">ECE / EEE</button>
+          <button type="button" class="opt" data-v="mech">Mechanical / Civil</button>
+          <button type="button" class="opt" data-v="other">Other</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl">AI interest</span>
+        <div class="opts" id="f-interest" role="group" aria-label="AI interest">
+          <button type="button" class="opt" data-v="genai"><span class="ic">{ }</span>Generative AI<small>LLMs, copilots</small></button>
+          <button type="button" class="opt" data-v="cv"><span class="ic">[◉]</span>Computer Vision<small>Images, video</small></button>
+          <button type="button" class="opt" data-v="iot"><span class="ic">((·))</span>IoT / Smart Systems<small>Sensors, devices</small></button>
+          <button type="button" class="opt" data-v="data"><span class="ic">▁▃▅</span>Data / Analytics<small>Trends, prediction</small></button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-college">College</label>
+        <input type="text" id="f-college" autocomplete="organization" placeholder="e.g. VIT Vellore" list="colleges">
+        <datalist id="colleges">
+          <option value="VIT Vellore"><option value="SRM Chennai"><option value="JNTU Hyderabad"><option value="CBIT Hyderabad"><option value="Anna University"><option value="RVCE Bengaluru"><option value="PES University"><option value="KL University">
+        </datalist>
+      </div>
+      <div class="err" id="err" role="alert"></div>
+      <button class="btn btn-primary" id="submit" type="submit">Generate My Project Starter</button>
+    </form>
+  </section>
+
+  <!-- LOADING -->
+  <section class="screen" id="s-loading">
+    <div class="loading">
+      <div class="spinner" aria-hidden="true"></div>
+      <h3 id="loading-text">Matching a project to your branch and interest…</h3>
+    </div>
+  </section>
+
+  <!-- SCREEN 3: RESULT -->
+  <section class="screen" id="s-result">
+    <div class="result">
+      <article class="project">
+        <div class="eyebrow" id="r-eyebrow">Your AI Project Starter</div>
+        <h2 id="r-title"></h2>
+        <p class="pitch" id="r-pitch"></p>
+        <div class="tags" id="r-tags"></div>
+        <div class="why" id="r-why"></div>
+        <div>
+          <div class="mini" style="margin-bottom:10px">Your 60-minute build plan</div>
+          <div class="plan" id="r-plan"></div>
+        </div>
+        <div class="resume" id="r-resume"></div>
+        <button class="linkbtn" id="another" type="button">Show me another idea</button>
+      </article>
+      <aside class="cta-card">
+        <div class="eyebrow">Free · Live · 60 minutes</div>
+        <h3>Build this with us in 60 minutes.</h3>
+        <p>"Build Your First AI Project in 60 Minutes" is a free live workshop for final-year engineering students.</p>
+        <ul>
+          <li>Build your first working version, live</li>
+          <li>Leave with a project for your resume</li>
+          <li>No prior AI experience needed</li>
+        </ul>
+        <a class="btn btn-amber" id="register" href="https://zippy-choux-26cbc2.netlify.app/" target="_blank" rel="noopener">Register for the Free Workshop</a>
+        <span class="small">Opens the workshop registration page. Registration is simulated.</span>
+      </aside>
+    </div>
+  </section>
+
+  <!-- SCREEN 4: REFERRAL -->
+  <section class="screen" id="s-ref">
+    <div class="ref">
+      <div class="panel">
+        <span class="ok"><i>✓</i> You're registered</span>
+        <h2 id="ref-hello">You're in.</h2>
+        <p class="small" style="font-size:16px;margin:0" id="ref-project"></p>
+        <div class="mini">Your referral code</div>
+        <div class="code"><strong id="ref-code">—</strong><button class="copy" id="copy-code" type="button">Copy</button></div>
+        <div class="reflink" id="ref-link"></div>
+        <a class="btn btn-wa" id="share-wa" href="#" target="_blank" rel="noopener">Share on WhatsApp</a>
+        <button class="btn btn-ghost" id="copy-link" type="button">Copy invite link</button>
+      </div>
+      <div class="panel">
+        <h3>Help 3 friends discover their AI project idea</h3>
+        <p class="small" style="margin:0;font-size:15px">Send your link to final-year classmates. They get their own project idea, and you climb the referral leaderboard. Top 5 referrers win ₹100 each.</p>
+        <div class="friends">
+          <div class="friend" id="fr-1"><b>1</b>Waiting</div>
+          <div class="friend" id="fr-2"><b>2</b>Waiting</div>
+          <div class="friend" id="fr-3"><b>3</b>Waiting</div>
+        </div>
+        <div class="mini">How your share grows the workshop</div>
+        <div class="loop">
+          <span>You</span><em>→</em><span>Referral link</span><em>→</em><span>WhatsApp</span><em>→</em><span>Friend gets an idea</span><em>→</em><span>Friend registers</span><em>↺</em>
+        </div>
+        <div>
+          <div class="engine" style="padding-top:0">
+            <div class="row"><span>Campaign goal</span><b>500 registrations</b></div>
+            <div class="bar"><i id="goal-bar" style="width:0%"></i></div>
+            <span class="small" id="goal-note">Progress counts registrations stored in this browser (prototype).</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACKER -->
+  <section class="screen" id="s-tracker">
+    <div class="tracker-head">
+      <div>
+        <div class="eyebrow">Campaign tracker · 7 days · ₹2,000</div>
+        <h2 style="margin-top:8px">Path to 500 registrations</h2>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost" id="load-sample" type="button" style="padding:11px 16px;font-size:15px">Load sample data</button>
+        <button class="btn btn-ghost" id="clear-data" type="button" style="padding:11px 16px;font-size:15px">Clear</button>
+      </div>
+    </div>
+    <div class="notice" id="data-notice">Showing registrations made in this browser. Sample data is simulated for demonstration and is not real campaign data. In production, this view reads from a database.</div>
+    <div class="kpis">
+      <div class="kpi"><div class="v" id="k-reg">0</div><div class="l">Registrations / 500</div></div>
+      <div class="kpi"><div class="v" id="k-starter">0</div><div class="l">Project Starter users</div></div>
+      <div class="kpi"><div class="v" id="k-conv">0%</div><div class="l">Starter → registration</div></div>
+      <div class="kpi"><div class="v" id="k-refrate">0%</div><div class="l">Registrations from referrals</div></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Registrations by engine vs target</h3>
+        <div id="engines"></div>
+      </div>
+      <div class="panel">
+        <h3>Ambassador leaderboard</h3>
+        <div class="tablewrap"><table><thead><tr><th>Ambassador</th><th>College</th><th>Regs</th><th>/ 25</th></tr></thead><tbody id="lb"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h3>Top colleges</h3>
+        <div class="tablewrap"><table><thead><tr><th>College</th><th>Regs</th></tr></thead><tbody id="colleges-t"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h3>What every registration records</h3>
+        <div class="schema"><span>name</span><span>college</span><span>branch</span><span>ai_interest</span><span>project</span><span>source</span><span>ambassador_id</span><span>community_id</span><span>referred_by</span><span>referral_code</span><span>status</span><span>timestamp</span></div>
+        <p class="small" style="margin:0">Attribution comes from the link a student arrives on: <code>#a-AMB03</code> for an ambassador, <code>#c-AICLUB</code> for a community, <code>#r-CODE</code> for a referral.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>Prototype for the NxtWave Growth Intern challenge. Simulation only: nothing is sent anywhere, and all data stays in this browser.</footer>
+</div>
+
+<script>
+(function(){
+  // Set to the published page URL so referral links point somewhere real.
+  var SHARE_BASE = "https://claude.ai/artifact/KxFuLMUjSDR5SpmrNmiNsy";
+
+  var IDEAS = {
+    genai:{
+      cse:{t:"Placement Prep Copilot",p:"Build an AI tool that converts a job description into a personalised 7-day interview preparation plan.",s:["Python","LLM API","Streamlit"],plan:["Set up the LLM API and a starter app","Extract skills and topics from the job description","Generate a day-wise prep plan with practice questions","Polish the UI and demo it"],r:"Built an LLM-powered copilot that turns job descriptions into personalised interview prep plans."},
+      ece:{t:"Datasheet Copilot",p:"Ask questions about any component datasheet and get pin-outs, ratings and wiring tips in plain English.",s:["Python","LLM API","PDF parsing"],plan:["Load a datasheet PDF and split it into chunks","Retrieve the right section for each question","Answer with page references","Demo on a real sensor datasheet"],r:"Built a retrieval-based assistant that answers questions from electronic component datasheets."},
+      mech:{t:"Site Report Writer",p:"Turn rough site or lab notes into a clean, formatted inspection report in seconds.",s:["Python","LLM API","Docx export"],plan:["Design the report template","Prompt the LLM to structure rough notes","Export a formatted report","Demo with sample site notes"],r:"Built a generative AI tool that converts field notes into structured engineering reports."},
+      other:{t:"Placement Prep Copilot",p:"Build an AI tool that converts a job description into a personalised 7-day interview preparation plan.",s:["Python","LLM API","Streamlit"],plan:["Set up the LLM API and a starter app","Extract skills and topics from the job description","Generate a day-wise prep plan with practice questions","Polish the UI and demo it"],r:"Built an LLM-powered copilot that turns job descriptions into personalised interview prep plans."}
+    },
+    cv:{
+      cse:{t:"Smart Campus Lost-and-Found",p:"Match photos of found items to lost-item reports using image similarity.",s:["Python","Image embeddings","Streamlit"],plan:["Load a pre-trained image model","Turn item photos into embeddings","Rank the closest matches for a lost item","Demo with campus photos"],r:"Built a computer-vision matcher that pairs found items with lost-item reports."},
+      ece:{t:"Resistor Value Reader",p:"Point a camera at a resistor and read its colour bands to get the value instantly.",s:["Python","OpenCV","Webcam"],plan:["Capture and crop the resistor image","Detect the colour bands","Map bands to a resistance value","Demo live with a webcam"],r:"Built an OpenCV tool that reads resistor values from colour bands in real time."},
+      mech:{t:"Concrete Crack Detector",p:"Detect cracks in wall or concrete photos and flag how severe they look.",s:["Python","Image classifier","Gradio"],plan:["Load a crack image dataset","Fine-tune a small pre-trained classifier","Highlight crack regions","Demo on new photos"],r:"Built a computer-vision model that detects and grades cracks in concrete surfaces."},
+      other:{t:"Smart Campus Lost-and-Found",p:"Match photos of found items to lost-item reports using image similarity.",s:["Python","Image embeddings","Streamlit"],plan:["Load a pre-trained image model","Turn item photos into embeddings","Rank the closest matches for a lost item","Demo with campus photos"],r:"Built a computer-vision matcher that pairs found items with lost-item reports."}
+    },
+    iot:{
+      cse:{t:"Library Seat Finder",p:"Predict which library seats will be free in the next hour from occupancy sensor data.",s:["Python","Simulated sensors","Dashboard"],plan:["Simulate seat-occupancy sensor data","Train a simple occupancy predictor","Show free seats on a live dashboard","Demo the prediction"],r:"Built an IoT dashboard that predicts library seat availability from sensor data."},
+      ece:{t:"Lab Energy Monitor",p:"Track lab power use with a current sensor and get AI alerts when a machine is left running.",s:["ESP32","Current sensor","Anomaly detection"],plan:["Read current data (real or simulated)","Stream readings to a dashboard","Flag unusual usage with anomaly detection","Demo an alert"],r:"Built an IoT energy monitor with AI-based anomaly alerts for lab equipment."},
+      mech:{t:"Machine Health Monitor",p:"Spot early signs of machine failure from vibration data before it breaks down.",s:["Python","Vibration data","Anomaly detection"],plan:["Load a vibration dataset","Extract simple features","Train an anomaly detector","Demo a failure warning"],r:"Built a predictive-maintenance model that flags machine faults from vibration data."},
+      other:{t:"Lab Energy Monitor",p:"Track lab power use with a current sensor and get AI alerts when a machine is left running.",s:["ESP32","Current sensor","Anomaly detection"],plan:["Read current data (real or simulated)","Stream readings to a dashboard","Flag unusual usage with anomaly detection","Demo an alert"],r:"Built an IoT energy monitor with AI-based anomaly alerts for lab equipment."}
+    },
+    data:{
+      cse:{t:"Placement Trend Explorer",p:"Analyse placement data to show which skills, roles and companies are trending for your branch.",s:["Python","Pandas","Plotly"],plan:["Load a placement dataset","Clean it and group by branch and skill","Chart the trends","Add an AI summary and demo it"],r:"Built a data dashboard that surfaces placement trends by branch, skill and company."},
+      ece:{t:"Placement Trend Explorer",p:"Analyse placement data to show which skills, roles and companies are trending for your branch.",s:["Python","Pandas","Plotly"],plan:["Load a placement dataset","Clean it and group by branch and skill","Chart the trends","Add an AI summary and demo it"],r:"Built a data dashboard that surfaces placement trends by branch, skill and company."},
+      mech:{t:"Construction Cost Estimator",p:"Predict project cost from size, materials and location with a simple ML model.",s:["Python","scikit-learn","Streamlit"],plan:["Load a cost dataset","Train a regression model","Build an input form for estimates","Demo with a sample project"],r:"Built an ML model that estimates construction cost from project parameters."},
+      other:{t:"Placement Trend Explorer",p:"Analyse placement data to show which skills, roles and companies are trending for your branch.",s:["Python","Pandas","Plotly"],plan:["Load a placement dataset","Clean it and group by branch and skill","Chart the trends","Add an AI summary and demo it"],r:"Built a data dashboard that surfaces placement trends by branch, skill and company."}
+    }
+  };
+  var WHY = {
+    cse:"Fits CSE / IT: it shows you can ship a real software product with an AI API, which is exactly what placement interviews probe.",
+    ece:"Fits ECE / EEE: it connects AI to hardware and signals, a combination few candidates can show on a resume.",
+    mech:"Fits Mechanical / Civil: it applies AI to a core-engineering problem, which stands out in both core and tech interviews.",
+    other:"Fits any branch: it needs no specialised hardware and solves a problem every final-year student understands."
+  };
+  var INTEREST_LABEL = {genai:"Generative AI",cv:"Computer Vision",iot:"IoT / Smart Systems",data:"Data / Analytics"};
+  var BRANCH_ORDER = ["cse","ece","mech","other"];
+  var PLAN_TIMES = ["00–10 min","10–30 min","30–50 min","50–60 min"];
+
+  var $ = function(id){return document.getElementById(id)};
+  var state = {name:"",branch:"",interest:"",college:"",alt:0,idea:null,code:"",source:attribution()};
+
+  // ---------- storage (local only, wrapped) ----------
+  var KEY = "aps.v1";
+  function load(){try{return JSON.parse(localStorage.getItem(KEY))||{events:[],sample:false}}catch(e){return {events:[],sample:false}}}
+  function save(d){try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){}}
+  var db = load();
+  function track(ev){ev.ts=new Date().toISOString();db.events.push(ev);save(db)}
+
+  function attribution(){
+    var h = (location.hash||"").replace("#","");
+    var m;
+    if((m=h.match(/^r-([A-Za-z0-9-]+)$/))) return {source:"referral",referred_by:m[1].toUpperCase()};
+    if((m=h.match(/^a-([A-Za-z0-9]+)$/))) return {source:"ambassador",ambassador_id:m[1].toUpperCase()};
+    if((m=h.match(/^c-([A-Za-z0-9]+)$/))) return {source:"community",community_id:m[1].toUpperCase()};
+    return {source:"direct"};
+  }
+
+  // ---------- navigation ----------
+  var current = "s-hero";
+  function show(id){
+    document.querySelectorAll(".screen").forEach(function(s){s.classList.toggle("active",s.id===id)});
+    current = id;
+    var tracker = id==="s-tracker";
+    $("tab-tracker").setAttribute("aria-current",tracker);
+    $("tab-student").setAttribute("aria-current",!tracker);
+    if(tracker) renderTracker();
+    window.scrollTo(0,0);
+  }
+  $("tab-student").onclick=function(){show(state.code?"s-ref":"s-hero")};
+  $("tab-tracker").onclick=function(){show("s-tracker")};
+
+  // referral banner
+  if(state.source.source==="referral"){
+    var inv=$("invite"); inv.classList.add("show");
+    var who = state.source.referred_by.split("-")[0];
+    inv.textContent = "Invited by "+who.charAt(0)+who.slice(1).toLowerCase()+" · get your own AI project idea in 1 minute";
+  }
+
+  // ---------- form ----------
+  function bindOpts(groupId,key){
+    $(groupId).querySelectorAll(".opt").forEach(function(b){
+      b.addEventListener("click",function(){ select(key,b.dataset.v) });
+    });
+  }
+  function select(key,v){
+    state[key]=v;
+    var g = key==="branch"?"f-branch":"f-interest";
+    $(g).querySelectorAll(".opt").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.v===v)});
+  }
+  bindOpts("f-branch","branch"); bindOpts("f-interest","interest");
+  $("go-generate").onclick=function(){show("s-input");setTimeout(function(){$("f-name").focus()},50)};
+
+  function validate(){
+    state.name=$("f-name").value.trim(); state.college=$("f-college").value.trim();
+    if(!state.name) return "Add your name so we can personalise your starter.";
+    if(!state.branch) return "Pick your branch.";
+    if(!state.interest) return "Pick the AI area you're most curious about.";
+    if(!state.college) return "Add your college.";
+    return "";
+  }
+  function generate(instant){
+    var e=validate(); $("err").textContent=e; if(e) return false;
+    state.alt=0; pickIdea();
+    track({type:"starter",name:state.name,college:state.college,branch:state.branch,ai_interest:state.interest,project:state.idea.t,source:state.source.source});
+    if(instant){renderResult();show("s-result");return true}
+    show("s-loading");
+    setTimeout(function(){renderResult();show("s-result")},1100);
+    return true;
+  }
+  $("form").addEventListener("submit",function(ev){ev.preventDefault();generate(false)});
+
+  function pickIdea(){
+    var start = BRANCH_ORDER.indexOf(state.branch);
+    var seen = {}, list = [];
+    for(var i=0;i<4;i++){var b=BRANCH_ORDER[(start+i)%4];var idea=IDEAS[state.interest][b];if(!seen[idea.t]){seen[idea.t]=1;list.push(idea)}}
+    state.idea = list[state.alt % list.length];
+  }
+  function renderResult(){
+    var i=state.idea;
+    $("r-eyebrow").textContent = "Your AI Project Starter · "+INTEREST_LABEL[state.interest];
+    $("r-title").textContent = i.t;
+    $("r-pitch").textContent = i.p;
+    $("r-tags").innerHTML = i.s.map(function(x){return '<span class="tag">'+x+'</span>'}).join("");
+    $("r-why").textContent = state.name+", "+WHY[state.branch].charAt(0).toLowerCase()+WHY[state.branch].slice(1);
+    $("r-plan").innerHTML = i.plan.map(function(x,k){return '<div><span>'+PLAN_TIMES[k]+'</span>'+x+'</div>'}).join("");
+    $("r-resume").innerHTML = "<b>Resume line:</b> "+i.r;
+  }
+  $("another").onclick=function(){state.alt++;pickIdea();renderResult()};
+
+  // ---------- registration + referral ----------
+  function makeCode(){
+    var first = (state.name.split(/\s+/)[0]||"FRIEND").toUpperCase().replace(/[^A-Z]/g,"").slice(0,6)||"FRIEND";
+    var seed = state.name+state.college+Date.now(), h=0;
+    for(var k=0;k<seed.length;k++){h=(h*31+seed.charCodeAt(k))>>>0}
+    var chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", s="";
+    for(var j=0;j<3;j++){s+=chars[h%chars.length];h=Math.floor(h/chars.length)+7}
+    return first+"-"+s;
+  }
+  function shareLink(){
+    var base = SHARE_BASE || (location.origin && location.origin!=="null" ? location.origin+location.pathname : "");
+    return base+"#r-"+state.code;
+  }
+  function register(code){
+    state.code = code || makeCode();
+    var ev={type:"register",name:state.name,college:state.college,branch:state.branch,ai_interest:state.interest,project:state.idea.t,referral_code:state.code,status:"registered"};
+    for(var k in state.source) ev[k]=state.source[k];
+    track(ev);
+    var link = shareLink();
+    $("ref-hello").textContent = "You're in, "+state.name.split(/\s+/)[0]+".";
+    $("ref-project").textContent = "You'll build "+state.idea.t+" in the live workshop.";
+    $("ref-code").textContent = state.code;
+    $("ref-link").textContent = link;
+    var msg = "I just got my personalised AI project idea in 1 minute: "+state.idea.t+". Get yours free and build it in a 60-minute live workshop for final-year engineers. Use my code "+state.code+": "+link;
+    $("share-wa").href = "https://wa.me/?text="+encodeURIComponent(msg);
+    var regs = db.events.filter(function(e){return e.type==="register"}).length;
+    $("goal-bar").style.width = Math.max(1.2,Math.min(100,regs/5))+"%";
+    show("s-ref");
+  }
+  $("register").onclick=function(){register()};
+  function copy(text,btn){
+    var done=function(){var o=btn.textContent;btn.textContent="Copied";setTimeout(function(){btn.textContent=o},1400)};
+    try{navigator.clipboard.writeText(text).then(done,function(){})}catch(e){}
+  }
+  $("copy-code").onclick=function(){copy(state.code,this)};
+  $("copy-link").onclick=function(){copy(shareLink(),this)};
+
+  // ---------- tracker ----------
+  var AMBS=[["AMB01","Priya","VIT Vellore"],["AMB02","Rahul","SRM Chennai"],["AMB03","Sneha","JNTU Hyderabad"],["AMB04","Karthik","CBIT Hyderabad"],["AMB05","Ananya","RVCE Bengaluru"],["AMB06","Vikram","Anna University"],["AMB07","Divya","PES University"],["AMB08","Arjun","KL University"],["AMB09","Meera","MIT Manipal"],["AMB10","Rohit","GITAM Vizag"]];
+  function rng(seed){return function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}}
+  function sample(){
+    var r=rng(42), ev=[], branches=["cse","cse","cse","ece","ece","mech","other"], ints=["genai","genai","cv","iot","data"];
+    function reg(src,extra,college){
+      var e={type:"register",sample:true,name:"Student",college:college,branch:branches[Math.floor(r()*branches.length)],ai_interest:ints[Math.floor(r()*ints.length)],source:src,status:"registered"};
+      for(var k in extra) e[k]=extra[k]; ev.push(e);
+      ev.push({type:"starter",sample:true,source:src,college:college});
+    }
+    AMBS.forEach(function(a){var n=6+Math.floor(r()*14);for(var i=0;i<n;i++)reg("ambassador",{ambassador_id:a[0]},a[2])});
+    for(var c=0;c<25;c++){var n=Math.floor(r()*6);for(var i=0;i<n;i++)reg("community",{community_id:"C"+(c+1)},AMBS[Math.floor(r()*10)][2])}
+    for(var i=0;i<38;i++)reg("referral",{referred_by:"REF"},AMBS[Math.floor(r()*10)][2]);
+    for(var i=0;i<120;i++)ev.push({type:"starter",sample:true,source:"community",college:AMBS[Math.floor(r()*10)][2]});
+    return ev;
+  }
+  $("load-sample").onclick=function(){db.events=db.events.filter(function(e){return !e.sample}).concat(sample());db.sample=true;save(db);renderTracker()};
+  $("clear-data").onclick=function(){db={events:[],sample:false};save(db);renderTracker()};
+
+  function renderTracker(){
+    var regs=db.events.filter(function(e){return e.type==="register"});
+    var starters=db.events.filter(function(e){return e.type==="starter"});
+    var by=function(arr,key){var o={};arr.forEach(function(e){var k=e[key]||"—";o[k]=(o[k]||0)+1});return o};
+    var src=by(regs,"source");
+    $("k-reg").textContent=regs.length;
+    $("k-starter").textContent=starters.length;
+    $("k-conv").textContent=starters.length?Math.round(regs.length/starters.length*100)+"%":"0%";
+    $("k-refrate").textContent=regs.length?Math.round((src.referral||0)/regs.length*100)+"%":"0%";
+    $("data-notice").textContent = db.sample
+      ? "Simulated sample data for demonstration. These are not real campaign results. In production, this view reads from a database."
+      : "Showing registrations made in this browser. Load sample data to preview a mid-campaign view (simulated). In production, this view reads from a database.";
+    var engines=[["Campus ambassadors (10 × 25)","ambassador",250],["Clubs + WhatsApp communities (25 × 6)","community",150],["Referral loop","referral",100]];
+    $("engines").innerHTML=engines.map(function(e){var v=src[e[1]]||0;return '<div class="engine"><div class="row"><span>'+e[0]+'</span><b>'+v+' / '+e[2]+'</b></div><div class="bar"><i style="width:'+Math.min(100,v/e[2]*100)+'%"></i></div></div>'}).join("")
+      +'<div class="engine"><div class="row"><span>Direct</span><b>'+(src.direct||0)+'</b></div></div>';
+    var amb=by(regs.filter(function(e){return e.ambassador_id}),"ambassador_id");
+    $("lb").innerHTML=AMBS.map(function(a){return [a,amb[a[0]]||0]}).sort(function(x,y){return y[1]-x[1]}).map(function(p){return '<tr><td>'+p[0][1]+' <span class="small">'+p[0][0]+'</span></td><td>'+p[0][2]+'</td><td>'+p[1]+'</td><td>'+Math.round(p[1]/25*100)+'%</td></tr>'}).join("");
+    var col=by(regs,"college");
+    var rows=Object.keys(col).map(function(k){return [k,col[k]]}).sort(function(x,y){return y[1]-x[1]}).slice(0,6);
+    $("colleges-t").innerHTML=rows.length?rows.map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>'}).join(""):'<tr><td class="small" colspan="2">No registrations yet. Generate a starter and register, or load sample data.</td></tr>';
+  }
+
+  if(location.hash==="#tracker") show("s-tracker");
+
+  // Hooks used to record the demo video deterministically.
+  window.__aps = {show:show,select:select,generate:generate,register:register,state:state,
+    setField:function(id,v){$(id).value=v}, current:function(){return current}};
+})();
+</script>
+
+</html>
